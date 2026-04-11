@@ -1,24 +1,16 @@
 -- V1__Initial_Schema.sql
 
 -- ============================================================
--- ENUMS
--- ============================================================
-CREATE TYPE pet_type   AS ENUM ('Cat', 'Dog', 'Bird', 'Rabbit', 'Fish', 'Other');
-CREATE TYPE pet_gender AS ENUM ('male', 'female', 'unknown');
-CREATE TYPE pet_size   AS ENUM ('small', 'medium', 'large', 'xlarge');
-CREATE TYPE pet_age    AS ENUM ('baby', 'young', 'adult', 'senior');
-
--- ============================================================
 -- PETS
 -- ============================================================
 CREATE TABLE pets (
     id                 BIGSERIAL PRIMARY KEY,
-    external_id        VARCHAR(100) UNIQUE,          -- null = local pet
-    type               pet_type    NOT NULL,
-    gender             pet_gender  NOT NULL DEFAULT 'unknown',
-    size               pet_size    NOT NULL,
-    age                pet_age     NOT NULL,
-    good_with_children BOOLEAN     NOT NULL DEFAULT false,
+    external_id        VARCHAR(100) UNIQUE,
+    type               VARCHAR(50)  NOT NULL,
+    gender             VARCHAR(50)  NOT NULL DEFAULT 'unknown',
+    size               VARCHAR(50)  NOT NULL,
+    age                VARCHAR(50)  NOT NULL,
+    good_with_children BOOLEAN      NOT NULL DEFAULT false,
     name               VARCHAR(200),
     description        TEXT,
     status             VARCHAR(50)  NOT NULL DEFAULT 'available',

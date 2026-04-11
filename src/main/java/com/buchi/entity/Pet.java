@@ -1,7 +1,11 @@
 package com.buchi.entity;
 
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -26,20 +30,20 @@ public class Pet {
     private String externalId;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, columnDefinition = "pet_type")
+    @Column(nullable = false)
     private PetType type;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, columnDefinition = "pet_gender")
+    @Column(nullable = false)
     @Builder.Default
     private PetGender gender = PetGender.unknown;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, columnDefinition = "pet_size")
+    @Column(nullable = false)
     private PetSize size;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, columnDefinition = "pet_age")
+    @Column(nullable = false)
     private PetAge age;
 
     @Column(name = "good_with_children", nullable = false)
@@ -64,8 +68,6 @@ public class Pet {
     @UpdateTimestamp
     @Column(name = "updated_at")
     private OffsetDateTime updatedAt;
-
-    // ── Enums ─────────────────────────────────────────────────────────────────
 
     public enum PetType   { Cat, Dog, Bird, Rabbit, Fish, Other }
     public enum PetGender { male, female, unknown }
