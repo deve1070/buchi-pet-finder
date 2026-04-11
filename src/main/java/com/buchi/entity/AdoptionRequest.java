@@ -1,12 +1,13 @@
 package com.buchi.entity;
 
-
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
-
-
 
 import java.time.OffsetDateTime;
 
@@ -18,12 +19,13 @@ import java.time.OffsetDateTime;
 @AllArgsConstructor
 @Builder
 public class AdoptionRequest {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToMany(fetch = FetchType.LAZY)
-    @JoinColumn(name = "customer_id",nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "customer_id", nullable = false)
     private Customer customer;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -32,14 +34,14 @@ public class AdoptionRequest {
 
     @Builder.Default
     private String status = "pending";
+
     private String notes;
 
     @CreationTimestamp
-    @Column(name = "created_at", updatable = false)
-    private OffsetDateTime createdAt;
+    @Column(name = "requested_at", updatable = false)
+    private OffsetDateTime requestedAt;
 
     @UpdateTimestamp
     @Column(name = "updated_at")
     private OffsetDateTime updatedAt;
-
 }
