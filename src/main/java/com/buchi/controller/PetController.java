@@ -1,6 +1,7 @@
 package com.buchi.controller;
 
 import com.buchi.dto.request.CreatePetRequest;
+import com.buchi.dto.request.GetPetsRequest;
 import com.buchi.dto.response.ApiResponse;
 import com.buchi.dto.response.PetResponse;
 import com.buchi.entity.Pet;
@@ -25,9 +26,11 @@ public class PetController {
 
     private final PetService petService;
 
+    // ── POST /create_pet ───────────────────────────────────────────────────────
+
     @Operation(
         summary = "Create a new pet",
-        description = "Creates a pet in the local database. Accepts optional photo uploads."
+        description = "Creates a pet in the local database with optional photos."
     )
     @PostMapping(value = "/create_pet", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<Map<String, String>>> createPet(
@@ -53,5 +56,34 @@ public class PetController {
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(ApiResponse.success(Map.of("pet_id", pet.getPetId())));
+    }
+
+    // ── GET /get_pets ──────────────────────────────────────────────────────────
+
+    @Operation(
+        summary = "Search for pets",
+        description = "Searches local DB first, then fills remaining slots from Petfinder. " +
+                      "All filters are optional except limit. " +
+                      "type, gender, size, age support multiple values."
+    )
+    @GetMapping("/get_pets")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getPets(
+            @RequestParam(required = false) List<Pet.PetType> type,
+            @RequestParam(required = false) List<Pet.PetGender> gender,
+            @RequestParam(required = false) List<Pet.PetSize> size,
+            @RequestParam(required = false) List<Pet.PetAge> age,
+            @RequestParam(name = "good_with_children", required = false) Boolean goodWithChildren,
+            @RequestParam Integer limit) {
+
+        GetPetsRequest request = new GetPetsRequest();
+        request.setType(type);
+        request.setGender(gender);
+        request.setSize(size);
+        request.setAge(age);
+        request.setGoodWithChildren(goodWithChildren);
+        request.setLimit(limit);
+
+        List<PetResponse> pets = petService.searchPets(request);
+        return ResponseEntity.ok(ApiResponse.success(Map.of("pets", pets)));
     }
 }
