@@ -1,14 +1,18 @@
 package com.buchi.service;
 
 import com.buchi.dto.request.CreatePetRequest;
+import com.buchi.dto.request.GetPetsRequest;
 import com.buchi.dto.response.PetResponse;
 import com.buchi.entity.Pet;
 import com.buchi.entity.PetPhoto;
 import com.buchi.exception.ResourceNotFoundException;
 import com.buchi.repository.PetRepository;
+import com.buchi.service.petfinder.PetfinderClient;
+import com.buchi.util.PetSpecification;
 import com.buchi.util.PhotoStorageService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -23,7 +27,10 @@ import java.util.List;
 public class PetService {
 
     private final PetRepository petRepository;
+    private final PetfinderClient petfinderClient;
     private final PhotoStorageService photoStorageService;
+
+    // ── Create ─────────────────────────────────────────────────────────────────
 
     @Transactional
     public PetResponse createPet(CreatePetRequest request, List<MultipartFile> photos) {
@@ -67,9 +74,61 @@ public class PetService {
         return PetResponse.fromEntity(pet);
     }
 
+    // ── Search ─────────────────────────────────────────────────────────────────
+
+    @Transactional(readOnly = true)
+    public List<PetResponse> searchPets(GetPetsRequest request) {
+        int limit = request.getLimit();
+
+        // 1. Query local DB first (local results always come first per spec)
+        var spec = PetSpecification.fromRequest(request);
+        List<Pet> localPets = petRepository
+                .findAll(spec, PageRequest.of(0, limit))
+                .getContent();
+
+        List<PetResponse> results = new ArrayList<>(
+                localPets.stream().map(PetResponse::fromEntity).toList()
+        );
+
+        log.info("Local DB returned {} pets", results.size());
+
+        // 2. Fill remaining slots from Petfinder
+        int remaining = limit - results.size();
+        if (remaining > 0) {
+            // Pass first value of each multi-select to Petfinder
+            String type   = firstValue(request.getType());
+            String gender = firstValue(request.getGender());
+            String size   = firstValue(request.getSize());
+            String age    = firstValue(request.getAge());
+
+            List<PetResponse> petfinderResults = petfinderClient.searchAnimals(
+                    type, gender, size, age,
+                    request.getGoodWithChildren(),
+                    remaining
+            );
+
+            results.addAll(petfinderResults);
+            log.info("Petfinder added {} pets", petfinderResults.size());
+        }
+
+        // 3. Trim to exact limit (safety guard)
+        if (results.size() > limit) {
+            results = results.subList(0, limit);
+        }
+
+        return results;
+    }
+
+    // ── Helpers ────────────────────────────────────────────────────────────────
+
     @Transactional(readOnly = true)
     public Pet findById(Long id) {
         return petRepository.findById(id)
                 .orElseThrow(() -> ResourceNotFoundException.pet(id));
+    }
+
+    private <T extends Enum<T>> String firstValue(List<T> list) {
+        if (list == null || list.isEmpty()) return null;
+        return list.get(0).name();
     }
 }
