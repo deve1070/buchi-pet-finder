@@ -1,2 +1,87 @@
-*.class
+# Compiled class files and build directories
+target/
+build/
+!.mvn/wrapper/maven-wrapper.jar
+!.gradle/wrapper/gradle-wrapper.jar
+
+# Maven
+.mvn/
+mvnw
+mvnw.cmd
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+.mvn/timing.properties
+.mvn/wrapper/maven-wrapper.properties
+
+# Gradle
+.gradle
+gradlew
+gradlew.bat
+gradle/wrapper/gradle-wrapper.properties
+
+# Spring Boot specific
+HELP.md
+.springBeans
+.sts4-cache
+*.springBoot
+
+# Logs and temporary files
 *.log
+logs/
+tmp/
+temp/
+
+# Environment variables and sensitive configs
+.env
+*.env
+application-*.local.properties
+application-*.local.yml
+application-*.local.yaml
+
+# ==================== VS Code ====================
+# VS Code workspace and settings folders
+.vscode/
+.code-workspace
+
+# Optional: Ignore only user-specific settings (recommended if you want to share some config)
+# .vscode/settings.json
+# .vscode/tasks.json
+# .vscode/launch.json
+# .vscode/extensions.json
+
+# VS Code debug / Java extension files
+.vscode/.history/
+.java/
+*.class
+*.jar
+
+# ==================== IDEs & Editors ====================
+.idea/
+*.iml
+.settings/
+.classpath
+.project
+.factorypath
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Virtual machine crash logs
+hs_err_pid*
+replay_pid*
+
+# Package files
+*.war
+*.ear
+*.zip
+*.tar.gz
+
+# Test coverage
+jacoco.exec
+coverage/
