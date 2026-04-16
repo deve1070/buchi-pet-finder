@@ -16,10 +16,14 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.util.List;
 import java.util.Map;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -103,5 +107,26 @@ class AdoptionControllerTest {
                         .content(objectMapper.writeValueAsString(
                                 Map.of("petId", 1))))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("GET /adoption_stats returns 200 with stats payload")
+    void adoptionStats_returns200() throws Exception {
+        var stats = com.buchi.dto.response.AdoptionStatsResponse.builder()
+                .totalAdoptionRequests(10L)
+                .uniqueCustomers(7L)
+                .byStatus(Map.of("pending", 8L, "approved", 2L))
+                .topPets(List.of(Map.of("pet_id", "2", "adoption_requests", 4L)))
+                .build();
+
+        when(adoptionService.getAdoptionStats(isNull(), isNull(), anyInt()))
+                .thenReturn(stats);
+
+        mockMvc.perform(get("/api/v1/adoption_stats"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("success"))
+                .andExpect(jsonPath("$.data.data.totalAdoptionRequests").value(10))
+                .andExpect(jsonPath("$.data.data.uniqueCustomers").value(7))
+                .andExpect(jsonPath("$.data.data.byStatus.pending").value(8));
     }
 }

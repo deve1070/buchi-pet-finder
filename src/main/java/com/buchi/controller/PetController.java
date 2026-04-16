@@ -4,6 +4,7 @@ import com.buchi.dto.request.CreatePetRequest;
 import com.buchi.dto.request.GetPetsRequest;
 import com.buchi.dto.response.ApiResponse;
 import com.buchi.dto.response.PetResponse;
+import com.buchi.dto.response.SimilarPetResponse;
 import com.buchi.entity.Pet;
 import com.buchi.service.PetService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -62,7 +63,7 @@ public class PetController {
 
     @Operation(
         summary = "Search for pets",
-        description = "Searches local DB first, then fills remaining slots from Petfinder. " +
+        description = "Searches local DB first, then fills remaining slots from Dog API. " +
                       "All filters are optional except limit. " +
                       "type, gender, size, age support multiple values."
     )
@@ -85,5 +86,20 @@ public class PetController {
 
         List<PetResponse> pets = petService.searchPets(request);
         return ResponseEntity.ok(ApiResponse.success(Map.of("pets", pets)));
+    }
+
+    // ── GET /pets/{pet_id}/similar ─────────────────────────────────────────────
+
+    @Operation(
+        summary = "Find similar pets",
+        description = "Returns similar local pets based on matching attributes (type, gender, size, age, good_with_children)."
+    )
+    @GetMapping("/pets/{pet_id}/similar")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> similarPets(
+            @PathVariable("pet_id") Long petId,
+            @RequestParam(value = "limit", defaultValue = "5") Integer limit) {
+
+        List<SimilarPetResponse> similar = petService.findSimilarPets(petId, limit);
+        return ResponseEntity.ok(ApiResponse.success(Map.of("similar", similar)));
     }
 }

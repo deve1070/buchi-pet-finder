@@ -53,4 +53,48 @@ public interface AdoptionRequestRepository extends JpaRepository<AdoptionRequest
     List<Object[]> countByWeekInRange(
             @Param("from") OffsetDateTime from,
             @Param("to") OffsetDateTime to);
+
+    // Stats: total requests in (optional) range
+    @Query("""
+        SELECT COUNT(a) FROM AdoptionRequest a
+        WHERE (:from IS NULL OR a.requestedAt >= :from)
+          AND (:to   IS NULL OR a.requestedAt <= :to)
+    """)
+    long countInRange(
+            @Param("from") OffsetDateTime from,
+            @Param("to") OffsetDateTime to);
+
+    // Stats: unique customers in (optional) range
+    @Query("""
+        SELECT COUNT(DISTINCT a.customer.id) FROM AdoptionRequest a
+        WHERE (:from IS NULL OR a.requestedAt >= :from)
+          AND (:to   IS NULL OR a.requestedAt <= :to)
+    """)
+    long countDistinctCustomersInRange(
+            @Param("from") OffsetDateTime from,
+            @Param("to") OffsetDateTime to);
+
+    // Stats: breakdown by status in (optional) range
+    @Query("""
+        SELECT a.status, COUNT(a) FROM AdoptionRequest a
+        WHERE (:from IS NULL OR a.requestedAt >= :from)
+          AND (:to   IS NULL OR a.requestedAt <= :to)
+        GROUP BY a.status
+        ORDER BY COUNT(a) DESC
+    """)
+    List<Object[]> countByStatusInRange(
+            @Param("from") OffsetDateTime from,
+            @Param("to") OffsetDateTime to);
+
+    // Stats: most-requested pets in (optional) range
+    @Query("""
+        SELECT a.pet.id, COUNT(a) FROM AdoptionRequest a
+        WHERE (:from IS NULL OR a.requestedAt >= :from)
+          AND (:to   IS NULL OR a.requestedAt <= :to)
+        GROUP BY a.pet.id
+        ORDER BY COUNT(a) DESC
+    """)
+    List<Object[]> countTopPetsInRange(
+            @Param("from") OffsetDateTime from,
+            @Param("to") OffsetDateTime to);
 }

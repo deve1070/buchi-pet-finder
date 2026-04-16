@@ -3,6 +3,7 @@ package com.buchi.service;
 import com.buchi.dto.request.CreatePetRequest;
 import com.buchi.dto.request.GetPetsRequest;
 import com.buchi.dto.response.PetResponse;
+import com.buchi.dto.response.SimilarPetResponse;
 import com.buchi.entity.Pet;
 import com.buchi.entity.PetPhoto;
 import com.buchi.exception.ResourceNotFoundException;
@@ -19,6 +20,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 @Service
@@ -108,6 +110,32 @@ public class PetService {
         return results;
     }
 
+    // ── Similarity search ──────────────────────────────────────────────────────
+
+    @Transactional(readOnly = true)
+    public List<SimilarPetResponse> findSimilarPets(Long petId, int limit) {
+        Pet base = findById(petId);
+
+        // Keep candidate set bounded for performance.
+        // Strategy: same type + available + not itself, then score in-memory.
+        List<Pet> candidates = petRepository.findAll((root, query, cb) -> cb.and(
+                cb.equal(root.get("type"), base.getType()),
+                cb.equal(root.get("status"), "available"),
+                cb.notEqual(root.get("id"), petId)
+        ), PageRequest.of(0, Math.max(1, Math.min(200, limit * 40)))).getContent();
+
+        return candidates.stream()
+                .map(p -> SimilarPetResponse.builder()
+                        .pet(PetResponse.fromEntity(p))
+                        .similarityScore(similarityScore(base, p))
+                        .build())
+                .sorted(Comparator
+                        .comparing(SimilarPetResponse::getSimilarityScore, Comparator.nullsLast(Comparator.reverseOrder()))
+                        .thenComparing(r -> Long.valueOf(r.getPet().getPetId())))
+                .limit(Math.max(0, limit))
+                .toList();
+    }
+
     // ── Helpers ────────────────────────────────────────────────────────────────
 
     @Transactional(readOnly = true)
@@ -119,5 +147,15 @@ public class PetService {
     private <T extends Enum<T>> String firstValue(List<T> list) {
         if (list == null || list.isEmpty()) return null;
         return list.get(0).name();
+    }
+
+    private int similarityScore(Pet base, Pet other) {
+        int score = 0;
+        if (base.getGender() != null && base.getGender().equals(other.getGender())) score += 2;
+        if (base.getSize() != null && base.getSize().equals(other.getSize())) score += 2;
+        if (base.getAge() != null && base.getAge().equals(other.getAge())) score += 2;
+        if (base.getGoodWithChildren() != null
+                && base.getGoodWithChildren().equals(other.getGoodWithChildren())) score += 1;
+        return score;
     }
 }

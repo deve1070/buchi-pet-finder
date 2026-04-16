@@ -3,6 +3,7 @@ package com.buchi.controller;
 import com.buchi.dto.request.AdoptRequest;
 import com.buchi.dto.request.DateRangeRequest;
 import com.buchi.dto.response.AdoptionRequestResponse;
+import com.buchi.dto.response.AdoptionStatsResponse;
 import com.buchi.dto.response.ApiResponse;
 import com.buchi.dto.response.ReportResponse;
 import com.buchi.entity.AdoptionRequest;
@@ -81,5 +82,23 @@ public class AdoptionController {
 
         ReportResponse report = adoptionService.generateReport(request);
         return ResponseEntity.ok(ApiResponse.success(Map.of("data", report)));
+    }
+
+    // ── GET /adoption_stats ────────────────────────────────────────────────────
+
+    @Operation(
+        summary = "Get adoption stats",
+        description = "Returns aggregate adoption stats, optionally filtered by from_date/to_date (yyyy-MM-dd)."
+    )
+    @GetMapping("/adoption_stats")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> adoptionStats(
+            @RequestParam(value = "from_date", required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
+            @RequestParam(value = "to_date", required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate,
+            @RequestParam(value = "top_pets_limit", defaultValue = "5") Integer topPetsLimit) {
+
+        AdoptionStatsResponse stats = adoptionService.getAdoptionStats(fromDate, toDate, topPetsLimit);
+        return ResponseEntity.ok(ApiResponse.success(Map.of("data", stats)));
     }
 }
