@@ -6,7 +6,7 @@ import com.buchi.dto.response.PetResponse;
 import com.buchi.entity.Pet;
 import com.buchi.exception.ResourceNotFoundException;
 import com.buchi.repository.PetRepository;
-import com.buchi.service.petfinder.PetfinderClient;
+import com.buchi.service.dogapi.DogApiClient;
 import com.buchi.util.PhotoStorageService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -31,7 +31,7 @@ import static org.mockito.Mockito.*;
 class PetServiceTest {
 
     @Mock private PetRepository petRepository;
-    @Mock private PetfinderClient petfinderClient;
+    @Mock private DogApiClient dogApiClient;
     @Mock private PhotoStorageService photoStorageService;
 
     @InjectMocks private PetService petService;
@@ -103,17 +103,17 @@ class PetServiceTest {
         when(petRepository.findAll(any(Specification.class), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(samplePet)));
 
-        PetResponse pf1 = PetResponse.builder().petId("pf-101").source("petfinder").build();
-        PetResponse pf2 = PetResponse.builder().petId("pf-102").source("petfinder").build();
-        when(petfinderClient.searchAnimals(any(), any(), any(), any(), any(), anyInt()))
-                .thenReturn(List.of(pf1, pf2));
+        PetResponse dog1 = PetResponse.builder().petId("dog-101").source("dogapi").build();
+        PetResponse dog2 = PetResponse.builder().petId("dog-102").source("dogapi").build();
+        when(dogApiClient.searchDogs(any(), anyInt()))
+                .thenReturn(List.of(dog1, dog2));
 
         List<PetResponse> results = petService.searchPets(req);
 
         assertThat(results).hasSize(3);
         assertThat(results.get(0).getSource()).isEqualTo("local");
-        assertThat(results.get(1).getSource()).isEqualTo("petfinder");
-        assertThat(results.get(2).getSource()).isEqualTo("petfinder");
+        assertThat(results.get(1).getSource()).isEqualTo("dogapi");
+        assertThat(results.get(2).getSource()).isEqualTo("dogapi");
     }
 
     @Test
@@ -129,7 +129,7 @@ class PetServiceTest {
         List<PetResponse> results = petService.searchPets(req);
 
         assertThat(results).hasSize(1);
-        verifyNoInteractions(petfinderClient);
+        verifyNoInteractions(dogApiClient);
     }
 
     @Test
@@ -161,8 +161,7 @@ class PetServiceTest {
 
         when(petRepository.findAll(any(Specification.class), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of()));
-        when(petfinderClient.searchAnimals(any(), any(), any(), any(), any(), anyInt()))
-                .thenReturn(List.of());
+        when(dogApiClient.searchDogs(any(), anyInt())).thenReturn(List.of());
 
         List<PetResponse> results = petService.searchPets(req);
 

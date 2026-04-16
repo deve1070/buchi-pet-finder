@@ -1,6 +1,7 @@
-package com.buchi.controller;
+package com.buchi.Controller;
 
 import com.buchi.entity.AdoptionRequest;
+import com.buchi.controller.AdoptionController;
 import com.buchi.entity.Customer;
 import com.buchi.entity.Pet;
 import com.buchi.exception.BadRequestException;

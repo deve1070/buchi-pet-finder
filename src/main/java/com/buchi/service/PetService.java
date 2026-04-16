@@ -7,7 +7,7 @@ import com.buchi.entity.Pet;
 import com.buchi.entity.PetPhoto;
 import com.buchi.exception.ResourceNotFoundException;
 import com.buchi.repository.PetRepository;
-import com.buchi.service.petfinder.PetfinderClient;
+import com.buchi.service.dogapi.DogApiClient;
 import com.buchi.util.PetSpecification;
 import com.buchi.util.PhotoStorageService;
 import lombok.RequiredArgsConstructor;
@@ -27,7 +27,7 @@ import java.util.List;
 public class PetService {
 
     private final PetRepository petRepository;
-    private final PetfinderClient petfinderClient;
+    private final DogApiClient dogApiClient;
     private final PhotoStorageService photoStorageService;
 
     // ── Create ─────────────────────────────────────────────────────────────────
@@ -79,8 +79,9 @@ public class PetService {
     @Transactional(readOnly = true)
     public List<PetResponse> searchPets(GetPetsRequest request) {
         int limit = request.getLimit();
+        String typeFilter = firstValue(request.getType());
 
-        // 1. Query local DB first (local results always come first per spec)
+        // 1. Local DB first (always top results per spec)
         var spec = PetSpecification.fromRequest(request);
         List<Pet> localPets = petRepository
                 .findAll(spec, PageRequest.of(0, limit))
@@ -89,29 +90,17 @@ public class PetService {
         List<PetResponse> results = new ArrayList<>(
                 localPets.stream().map(PetResponse::fromEntity).toList()
         );
-
         log.info("Local DB returned {} pets", results.size());
 
-        // 2. Fill remaining slots from Petfinder
+        // 2. Dog API fills remaining slots
         int remaining = limit - results.size();
         if (remaining > 0) {
-            // Pass first value of each multi-select to Petfinder
-            String type   = firstValue(request.getType());
-            String gender = firstValue(request.getGender());
-            String size   = firstValue(request.getSize());
-            String age    = firstValue(request.getAge());
-
-            List<PetResponse> petfinderResults = petfinderClient.searchAnimals(
-                    type, gender, size, age,
-                    request.getGoodWithChildren(),
-                    remaining
-            );
-
-            results.addAll(petfinderResults);
-            log.info("Petfinder added {} pets", petfinderResults.size());
+            List<PetResponse> dogApiResults = dogApiClient.searchDogs(typeFilter, remaining);
+            results.addAll(dogApiResults);
+            log.info("Dog API added {} pets", dogApiResults.size());
         }
 
-        // 3. Trim to exact limit (safety guard)
+        // 3. Trim to exact limit
         if (results.size() > limit) {
             results = results.subList(0, limit);
         }

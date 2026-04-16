@@ -1,4 +1,6 @@
-package com.buchi.controller;
+package com.buchi.Controller;
+
+import com.buchi.controller.CustomerController;
 
 import com.buchi.entity.Customer;
 import com.buchi.service.CustomerService;
