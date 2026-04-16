@@ -3,6 +3,7 @@ package com.buchi.service;
 import com.buchi.dto.request.AdoptRequest;
 import com.buchi.dto.request.DateRangeRequest;
 import com.buchi.dto.response.AdoptionRequestResponse;
+import com.buchi.dto.response.AdoptionStatsResponse;
 import com.buchi.dto.response.ReportResponse;
 import com.buchi.entity.AdoptionRequest;
 import com.buchi.entity.Customer;
@@ -20,6 +21,7 @@ import java.time.ZoneOffset;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -110,6 +112,42 @@ public class AdoptionService {
                 .weeklyAdoptionRequests(weeklyAdoptions)
                 .totalAdoptions(totalAdoptions)
                 .uniqueCustomers(uniqueCustomers)
+                .build();
+    }
+
+    // ── Adoption stats (API) ───────────────────────────────────────────────────
+
+    @Transactional(readOnly = true)
+    public AdoptionStatsResponse getAdoptionStats(LocalDate fromDate, LocalDate toDate, int topPetsLimit) {
+        OffsetDateTime from = (fromDate != null) ? toStartOfDay(fromDate) : null;
+        OffsetDateTime to   = (toDate != null) ? toEndOfDay(toDate) : null;
+
+        long total = adoptionRepo.countInRange(from, to);
+        long uniqueCustomers = adoptionRepo.countDistinctCustomersInRange(from, to);
+
+        Map<String, Long> byStatus = adoptionRepo.countByStatusInRange(from, to)
+                .stream()
+                .collect(Collectors.toMap(
+                        row -> row[0].toString(),
+                        row -> ((Number) row[1]).longValue(),
+                        (a, b) -> a,
+                        LinkedHashMap::new
+                ));
+
+        List<Map<String, Object>> topPets = adoptionRepo.countTopPetsInRange(from, to)
+                .stream()
+                .limit(Math.max(0, topPetsLimit))
+                .map(row -> Map.<String, Object>of(
+                        "pet_id", String.valueOf(row[0]),
+                        "adoption_requests", ((Number) row[1]).longValue()
+                ))
+                .toList();
+
+        return AdoptionStatsResponse.builder()
+                .totalAdoptionRequests(total)
+                .uniqueCustomers(uniqueCustomers)
+                .byStatus(byStatus)
+                .topPets(topPets)
                 .build();
     }
 

@@ -2,6 +2,7 @@ package com.buchi.Controller;
 
 import com.buchi.controller.PetController;
 import com.buchi.dto.response.PetResponse;
+import com.buchi.dto.response.SimilarPetResponse;
 import com.buchi.service.PetService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -13,6 +14,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -76,5 +79,29 @@ class PetControllerTest {
                         .param("limit", "3"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.pets[0].type").value("Cat"));
+    }
+
+    @Test
+    @DisplayName("GET /pets/{pet_id}/similar returns 200 with similar array")
+    void similarPets_returns200() throws Exception {
+        PetResponse similarPet = PetResponse.builder()
+                .petId("2").source("local").type("Dog")
+                .gender("male").size("small").age("young")
+                .goodWithChildren(true).photos(List.of())
+                .build();
+
+        SimilarPetResponse item = SimilarPetResponse.builder()
+                .pet(similarPet)
+                .similarityScore(7)
+                .build();
+
+        when(petService.findSimilarPets(eq(1L), anyInt())).thenReturn(List.of(item));
+
+        mockMvc.perform(get("/api/v1/pets/1/similar").param("limit", "5"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("success"))
+                .andExpect(jsonPath("$.data.similar").isArray())
+                .andExpect(jsonPath("$.data.similar[0].similarityScore").value(7))
+                .andExpect(jsonPath("$.data.similar[0].pet.petId").value("2"));
     }
 }
