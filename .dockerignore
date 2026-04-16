@@ -1,0 +1,15 @@
+target/
+*.class
+*.jar
+.git/
+.gitignore
+.env
+uploads/
+*.log
+logs/
+.idea/
+*.iml
+.vscode/
+README.md
+docker-compose.yml
+Dockerfile
