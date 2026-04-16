@@ -41,6 +41,9 @@ services:
       PETFINDER_API_KEY: ${PETFINDER_API_KEY:-placeholder}
       PETFINDER_API_SECRET: ${PETFINDER_API_SECRET:-placeholder}
 
+      # The Dog API key (set in .env file)
+      DOGAPI_KEY: ${DOGAPI_KEY:-}
+
       # Public base URL for photo links
       BASE_URL: ${BASE_URL:-http://localhost:8080}
 
@@ -49,7 +52,6 @@ services:
     ports:
       - "8080:8080"
     volumes:
-      # Persist uploaded photos across container restarts
       - photo_uploads:/app/uploads/photos
     healthcheck:
       test:

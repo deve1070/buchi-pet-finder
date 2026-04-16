@@ -1,5 +1,6 @@
-package com.buchi.controller;
+package com.buchi.Controller;
 
+import com.buchi.controller.PetController;
 import com.buchi.dto.response.PetResponse;
 import com.buchi.service.PetService;
 import org.junit.jupiter.api.DisplayName;
