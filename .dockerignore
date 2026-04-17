@@ -1,15 +1,30 @@
+# Git
+.git
+.gitignore
+
+# Environment
+.env
+
+# Build outputs
 target/
 *.class
 *.jar
-.git/
-.gitignore
-.env
-uploads/
+
+# Logs
 *.log
 logs/
+
+# IDE
 .idea/
 *.iml
 .vscode/
-README.md
+
+# Uploads (critical)
+uploads/
+
+# OS
+.DS_Store
+
+# Docker (optional but usually excluded)
 docker-compose.yml
 Dockerfile
