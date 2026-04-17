@@ -122,10 +122,18 @@ public class AdoptionService {
         OffsetDateTime from = (fromDate != null) ? toStartOfDay(fromDate) : null;
         OffsetDateTime to   = (toDate != null) ? toEndOfDay(toDate) : null;
 
-        long total = adoptionRepo.countInRange(from, to);
-        long uniqueCustomers = adoptionRepo.countDistinctCustomersInRange(from, to);
+        boolean hasRange = from != null && to != null;
 
-        Map<String, Long> byStatus = adoptionRepo.countByStatusInRange(from, to)
+        long total = hasRange ? adoptionRepo.countInRange(from, to) : adoptionRepo.countAllRequests();
+        long uniqueCustomers = hasRange
+                ? adoptionRepo.countDistinctCustomersInRange(from, to)
+                : adoptionRepo.countDistinctCustomers();
+
+        List<Object[]> statusRows = hasRange
+                ? adoptionRepo.countByStatusInRange(from, to)
+                : adoptionRepo.countByStatus();
+
+        Map<String, Long> byStatus = statusRows
                 .stream()
                 .collect(Collectors.toMap(
                         row -> row[0].toString(),
@@ -134,7 +142,11 @@ public class AdoptionService {
                         LinkedHashMap::new
                 ));
 
-        List<Map<String, Object>> topPets = adoptionRepo.countTopPetsInRange(from, to)
+        List<Object[]> topPetRows = hasRange
+                ? adoptionRepo.countTopPetsInRange(from, to)
+                : adoptionRepo.countTopPets();
+
+        List<Map<String, Object>> topPets = topPetRows
                 .stream()
                 .limit(Math.max(0, topPetsLimit))
                 .map(row -> Map.<String, Object>of(

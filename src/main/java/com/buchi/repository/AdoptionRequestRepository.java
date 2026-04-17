@@ -54,31 +54,41 @@ public interface AdoptionRequestRepository extends JpaRepository<AdoptionRequest
             @Param("from") OffsetDateTime from,
             @Param("to") OffsetDateTime to);
 
-    // Stats: total requests in (optional) range
+    // Stats: total requests
+    @Query("SELECT COUNT(a) FROM AdoptionRequest a")
+    long countAllRequests();
+
     @Query("""
         SELECT COUNT(a) FROM AdoptionRequest a
-        WHERE (:from IS NULL OR a.requestedAt >= :from)
-          AND (:to   IS NULL OR a.requestedAt <= :to)
+        WHERE a.requestedAt BETWEEN :from AND :to
     """)
     long countInRange(
             @Param("from") OffsetDateTime from,
             @Param("to") OffsetDateTime to);
 
-    // Stats: unique customers in (optional) range
+    // Stats: unique customers
+    @Query("SELECT COUNT(DISTINCT a.customer.id) FROM AdoptionRequest a")
+    long countDistinctCustomers();
+
     @Query("""
         SELECT COUNT(DISTINCT a.customer.id) FROM AdoptionRequest a
-        WHERE (:from IS NULL OR a.requestedAt >= :from)
-          AND (:to   IS NULL OR a.requestedAt <= :to)
+        WHERE a.requestedAt BETWEEN :from AND :to
     """)
     long countDistinctCustomersInRange(
             @Param("from") OffsetDateTime from,
             @Param("to") OffsetDateTime to);
 
-    // Stats: breakdown by status in (optional) range
+    // Stats: breakdown by status
     @Query("""
         SELECT a.status, COUNT(a) FROM AdoptionRequest a
-        WHERE (:from IS NULL OR a.requestedAt >= :from)
-          AND (:to   IS NULL OR a.requestedAt <= :to)
+        GROUP BY a.status
+        ORDER BY COUNT(a) DESC
+    """)
+    List<Object[]> countByStatus();
+
+    @Query("""
+        SELECT a.status, COUNT(a) FROM AdoptionRequest a
+        WHERE a.requestedAt BETWEEN :from AND :to
         GROUP BY a.status
         ORDER BY COUNT(a) DESC
     """)
@@ -86,11 +96,17 @@ public interface AdoptionRequestRepository extends JpaRepository<AdoptionRequest
             @Param("from") OffsetDateTime from,
             @Param("to") OffsetDateTime to);
 
-    // Stats: most-requested pets in (optional) range
+    // Stats: most-requested pets
     @Query("""
         SELECT a.pet.id, COUNT(a) FROM AdoptionRequest a
-        WHERE (:from IS NULL OR a.requestedAt >= :from)
-          AND (:to   IS NULL OR a.requestedAt <= :to)
+        GROUP BY a.pet.id
+        ORDER BY COUNT(a) DESC
+    """)
+    List<Object[]> countTopPets();
+
+    @Query("""
+        SELECT a.pet.id, COUNT(a) FROM AdoptionRequest a
+        WHERE a.requestedAt BETWEEN :from AND :to
         GROUP BY a.pet.id
         ORDER BY COUNT(a) DESC
     """)
